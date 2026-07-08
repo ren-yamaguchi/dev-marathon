@@ -13,6 +13,7 @@
       <table class="table table-striped">
         <thead class="thead-dark">
           <tr>
+            <th scope="col"></th>
             <th scope="col">#</th>
             <th scope="col">Company Name</th>
             <th scope="col">Contact</th>
@@ -22,11 +23,13 @@
           <!-- 顧客データはここに挿入されます -->
         </tbody>
       </table>
+      <button type="button" id="edit-btn" class="btn btn-primary">編集</button>
+      <button type="button" id="delete-btn" class="btn btn-danger">削除</button>
     </div>
 
     <script type="module">
       // ExpressサーバのAPIエンドポイントのURL
-      import config from "./config.js";
+      import config from "../config.js";
 
       fetch(`${config.apiUrl}/customers`)
         .then((response) => {
@@ -38,15 +41,50 @@
           const list = document.getElementById("customer-list");
           data.forEach((customer, index) => {
             const row = list.insertRow();
-            const cell1 = row.insertCell(0);
-            const cell2 = row.insertCell(1);
-            const cell3 = row.insertCell(2);
+            const cell0 = row.insertCell(0);
+            const cell1 = row.insertCell(1);
+            const cell2 = row.insertCell(2);
+            const cell3 = row.insertCell(3);
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = customer.customer_id;
+            cell0.appendChild(checkbox);
             cell1.textContent = index + 1;
-            cell2.textContent = customer.companyname;
+            const link = document.createElement("a");
+            link.href = `detail.html?id=${customer.customer_id}`;
+            link.textContent = customer.company_name;
+            cell2.appendChild(link);
             cell3.textContent = customer.contact;
           });
         })
         .catch((error) => console.error(error));
+
+      document.getElementById("edit-btn").addEventListener("click", () => {
+        const checkedIds = [...document.querySelectorAll("#customer-list input[type=checkbox]:checked")]
+          .map((checkbox) => checkbox.value);
+        if (checkedIds.length !== 1) {
+          alert("編集する顧客を1件だけ選択してください。");
+          return;
+        }
+        location.href = `update.html?id=${checkedIds[0]}`;
+      });
+
+      document.getElementById("delete-btn").addEventListener("click", () => {
+        const checkedIds = [...document.querySelectorAll("#customer-list input[type=checkbox]:checked")]
+          .map((checkbox) => checkbox.value);
+        if (checkedIds.length === 0) {
+          alert("削除する顧客を選択してください。");
+          return;
+        }
+        alert("削除していいですか?");
+        Promise.all(
+          checkedIds.map((id) =>
+            fetch(`${config.apiUrl}/customers/${id}`, { method: "DELETE" }).then((response) => response.json())
+          )
+        )
+          .then(() => location.reload())
+          .catch((error) => console.error(error));
+      });
     </script>
 
     <!-- BootstrapのJavaScriptと依存関係のリンク -->

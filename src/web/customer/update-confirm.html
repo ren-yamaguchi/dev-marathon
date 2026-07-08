@@ -10,9 +10,67 @@
 <body>
     <div class="container mt-5">
         <!-- ここにHTMLを書く -->
+        <h2 class="mb-4">更新内容の確認</h2>
+        <dl class="row">
+            <dt class="col-sm-3">会社名</dt>
+            <dd class="col-sm-9" data-field="companyName"></dd>
+            <dt class="col-sm-3">業種</dt>
+            <dd class="col-sm-9" data-field="industry"></dd>
+            <dt class="col-sm-3">連絡先</dt>
+            <dd class="col-sm-9" data-field="contact"></dd>
+            <dt class="col-sm-3">所在地</dt>
+            <dd class="col-sm-9" data-field="location"></dd>
+        </dl>
+        <div id="result-message" class="alert alert-success d-none" role="alert"></div>
+        <button type="button" id="back-btn" class="btn btn-secondary">戻る</button>
+        <button type="button" id="register-btn" class="btn btn-primary">更新する</button>
     </div>
     <script type="module">
-        <!-- ここにJSを書く -->
+        // ここにJSを書く
+        import config from '../config.js';
+
+        const customerData = JSON.parse(sessionStorage.getItem('customerUpdateData') || 'null');
+        if (!customerData) {
+            location.href = 'list.html';
+        } else {
+            document.querySelectorAll('[data-field]').forEach(el => {
+                el.textContent = customerData[el.dataset.field] ?? '';
+            });
+        }
+
+        let isUpdated = false;
+
+        document.getElementById('back-btn').addEventListener('click', () => {
+            location.href = isUpdated ? 'list.html' : `update.html?id=${customerData.id}`;
+        });
+
+        document.getElementById('register-btn').addEventListener('click', () => {
+            fetch(`${config.apiUrl}/customers/${customerData.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    companyName: customerData.companyName,
+                    industry: customerData.industry,
+                    contact: customerData.contact,
+                    location: customerData.location
+                })
+            }).then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    sessionStorage.removeItem('customerUpdateData');
+                    isUpdated = true;
+                    document.getElementById('register-btn').disabled = true;
+                    const message = document.getElementById('result-message');
+                    message.textContent = '顧客情報が正常に更新されました。';
+                    message.classList.remove('d-none');
+                } else {
+                    alert('更新に失敗しました。');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
     </script>
     <!-- BootstrapのJavaScriptの読み込み -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
