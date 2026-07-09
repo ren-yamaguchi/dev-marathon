@@ -3,34 +3,32 @@
 // -------------------------------------------------------------
 
 describe('顧客情報入力フォームのテスト', () => {
-  it('顧客情報を入力して送信し、成功メッセージを確認する', () => {
-    cy.visit('/nishi/customer/add.html'); // テスト対象のページにアクセス
-    cy.window().then((win) => {
-      // windowのalertをスタブ化し、エイリアスを設定
-      cy.stub(win, 'alert').as('alertStub');
-    });
+  it('顧客情報を入力し、確認画面で登録して成功メッセージを確認する', () => {
+    cy.visit('/re_yamaguchi/customer/add.html');
 
-    // テストデータの読み込み
     cy.fixture('customerData').then((data) => {
-      // フォームの入力フィールドにテストデータを入力
       const uniqueContactNumber = `03-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`;
       cy.get('#companyName').type(data.companyName);
       cy.get('#industry').type(data.industry);
       cy.get('#contact').type(uniqueContactNumber);
       cy.get('#location').type(data.location);
+
+      cy.get('#customer-form').submit();
+
+      cy.url().should('include', 'add-confirm.html');
+      cy.get('[data-field="companyName"]').should('have.text', data.companyName);
+      cy.get('[data-field="industry"]').should('have.text', data.industry);
+      cy.get('[data-field="contact"]').should('have.text', uniqueContactNumber);
+      cy.get('[data-field="location"]').should('have.text', data.location);
+
+      cy.get('#register-btn').click();
+
+      cy.get('#result-message')
+        .should('be.visible')
+        .and('contain.text', '顧客情報が正常に保存されました。');
+
+      cy.get('#register-btn').should('be.disabled');
     });
-
-    // フォームの送信
-    cy.get('#customer-form').submit();
-
-    cy.get('@alertStub').should('have.been.calledOnceWith', '顧客情報が正常に保存されました。');
-
-    // フォームがリセットされたことを確認
-    cy.get('#companyName').should('have.value', '');
-    cy.get('#industry').should('have.value', '');
-    cy.get('#contact').should('have.value', '');
-    cy.get('#location').should('have.value', '');
-    cy.wait(5000);
   });
 });
 
