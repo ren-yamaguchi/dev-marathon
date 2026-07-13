@@ -1,0 +1,48 @@
+name: CI/CD pipeline
+on:
+  push:
+    branches:
+      - main   # ← developからmainに変更
+
+jobs:
+  # ① Stagingにデプロイ
+  deploy-staging:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEV_SSH_HOST }}
+          port: ${{ secrets.DEV_SSH_PORT }}
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSHE_SSH_KEY }}
+          script: |
+            bash /app/re_yamaguchi/deploy.sh re_yamaguchi
+
+  # ② Cypressテスト実行
+  test:
+    needs: deploy-staging   # ← Stagingデプロイ完了後に実行
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEV_SSH_HOST }}
+          port: ${{ secrets.DEV_SSH_PORT }}
+          username: ${{ secrets.DEV_SSH_USER }}
+          key: ${{ secrets.DEV_SSHE_SSH_KEY }}
+          script: |
+            cd /ci/
+            npx cypress run --browser chrome --spec cypress/e2e/re_yamaguchi.*
+
+  # ③ Productionにデプロイ
+  deploy-production:
+    needs: test   # ← テスト成功後に実行
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PROD_SSH_HOST }}
+          port: ${{ secrets.PROD_SSH_PORT }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            bash /app/re_yamaguchi/deploy.sh re_yamaguchi
