@@ -17,7 +17,8 @@ if [ -z "$USER_NAME" ]; then
 fi
 
 # アプリとウェブディレクトリの基本パスを定義します。
-APP_DIR="/app/$USER_NAME/dev-marathon"
+#APP_DIR="/app/$USER_NAME/dev-marathon"
+APP_DIR="/app/$USER_NAME"
 WEB_DIR="/usr/share/nginx/html/$USER_NAME"
 CYPRESS_DIR="/ci"
 
